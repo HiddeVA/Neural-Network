@@ -19,10 +19,9 @@
 
 ## The code
 
-- Read input image into array
-    - Format?
-- Define data format with weights/biases
-    - `class Network(int[] layerSizes)`
-- Define cost function
+Source: https://github.com/mnielsen/neural-networks-and-deep-learning/blob/master/src/network.py
 - Calculate gradient descent for each weight/bias
-    - Learning rate?
+1. Calculate the result vectors and activations for each layer
+2. Start at the last layer
+3. Delta for biases is sigmoid_prime * cost func derivative
+4. Delta for weights?

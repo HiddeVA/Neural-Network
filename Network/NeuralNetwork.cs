@@ -58,7 +58,7 @@ class NeuralNetwork
         var vector = input;
         for (int i = 0; i < numberOfLayers; i++)
         {
-            vector = MatrixMultiply(vector, _weights[i], _biases[i]);
+            vector = Activations(vector, _weights[i], _biases[i]);
         }
         return vector;
     }
@@ -73,13 +73,13 @@ class NeuralNetwork
         });
     }
 
-    private static float[] MatrixMultiply(float[] vector, float[][] matrix, float[] bias)
+    private static float[] Activations(float[] vector, float[][] weights, float[] bias)
     {
-        return [.. matrix.Zip(bias)
-            .Select(w => vector.Zip(w.First, (x, y) => x * y).Sum() + w.Second)
-            .Select(Sigmoid)];
-
+        var weighted = weights.Select((w, i) => vector.Zip(w, (x, y) => x * y).Sum() + bias[i]);
+        return [.. weighted.Select(Sigmoid)];
     }
 
     private static float Sigmoid(float input) => 1 / (1 + MathF.Exp(-input));
+
+    private static float SigmoidDeriv(float input) => Sigmoid(input) * (1 - Sigmoid(input));
 }
