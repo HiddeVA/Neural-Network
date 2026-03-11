@@ -34,14 +34,19 @@ for (int i = 0; i < rowGroup.RowCount; i++)
             list.Add(pixel / 255f);
         }
     }
-    var input = list.ToArray();
+    var input = new Vector([.. list]);
 
     var expected = new float[10];
     expected[label] = 1f;
     Console.WriteLine($"Loaded image {i}");
 
-    var cost = network.Cost(input, expected);
-    Console.WriteLine($"Expected {label}, cost {cost}");
+    var cost = network.BackPropagate(input, new Vector(expected));
+    foreach (var layer in cost)
+    {
+        Console.WriteLine($"Errors in layer: {string.Join(" ", layer)}");
+    }
+
+    break;
 }
 
 

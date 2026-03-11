@@ -24,26 +24,64 @@ class NeuralNetwork
         _biases = biases;
     }
 
-    private void BackPropagate(Vector input, Vector desired)
+    public void BackPropagate(ICollection<(Vector input, int expected)> inputs)
+    {
+        var errors = new List<(List<Matrix>, List<Vector>)>();
+        foreach (var pair in inputs)
+        {
+            var desired = new Vector(new float[10]);
+            desired.Values[pair.expected] = 1;
+
+            errors.Add(BackPropagate(pair.input, desired));
+        }
+
+        // Calculate average error
+
+        // APply adjustments to weights
+    }
+
+    private (List<Matrix>, List<Vector>) BackPropagate(Vector input, Vector desired)
     {
         // Save Z values for each layer
         var zValues = new List<Vector>();
-        var activations = input;
+        List<Vector> activations = [input];
+        var activation = input;
         for (int layer = 0; layer < NumberOfLayers; layer++)
         {
             var weights = _weights[layer];
             var biases = _biases[layer];
-            var weighted = weights * activations + biases;
+            var weighted = weights * activation + biases;
             zValues.Add(weighted); // Save for back propagation
-            activations = Sigmoid(weighted);
+            activation = Sigmoid(weighted);
+            activations.Add(activation);
         }
 
-        var cost = activations.Zip(desired, (x, y) => (x - y) * (x - y)).Sum() / 2;
+        var cost = activation.Zip(desired, (x, y) => (x - y) * (x - y)).Sum() / 2;
 
         // And now........back
-        // TODO: Convert to loop format
-        var errorsOutputLayer = (activations - desired) * SigmoidDeriv(zValues[1]);
-        var errorsMiddleLayer = _weights[1].Transpose() * errorsOutputLayer * SigmoidDeriv(zValues[0]);
+        var weightErrors = new List<Matrix>();
+        var biasErrors = new List<Vector>();
+
+        // Calculate errors in final layer
+        var delta = (activations[NumberOfLayers] - desired)
+            .ElementProduct(SigmoidDeriv(zValues[NumberOfLayers - 1]));
+        biasErrors.Add(delta);
+        weightErrors.Add(activations[NumberOfLayers - 1].CrossProduct(delta));
+
+        // Calculate all other errors
+        for (int i = NumberOfLayers - 2; i >= 0 ; i--)
+        {
+            delta = (_weights[i + 1].Transpose() * delta)
+                .ElementProduct(SigmoidDeriv(zValues[i]));
+            biasErrors.Add(delta);
+            weightErrors.Add(activations[i].CrossProduct(delta));
+        }
+
+        // Errors were added in reverse other
+        biasErrors.Reverse();
+        weightErrors.Reverse();
+
+        return (weightErrors, biasErrors);
     }
 
     private static Vector Sigmoid(Vector input) => new([..input.Select(Sigmoid)]);
