@@ -20,6 +20,23 @@ record Vector(float[] Values) : IEnumerable<float>
         return new Vector(w);
     }
 
+    public static Vector Average(IEnumerable<Vector> vectors)
+    {
+        var first = vectors.First().Values;
+        var average = new float[first.Length];
+        for (int i = 0; i < first.Length; i++)
+        {
+            float sum = 0;
+            foreach (var m in vectors)
+            {
+                sum += m.Values[i];
+            }
+            average[i] = sum / vectors.Count();            
+        }
+
+        return new Vector(average);
+    }
+
     public Vector ElementProduct(Vector other) => new([.. this.Zip(other, (x, y) => x * y)]);
     public Matrix CrossProduct(Vector other)
     {

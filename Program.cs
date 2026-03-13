@@ -19,6 +19,8 @@ var rowGroup = reader.RowGroups[0];
 var bytes = (await rowGroup.ReadColumnAsync(schema.DataFields[0])).Data;
 var labels = (await rowGroup.ReadColumnAsync(schema.DataFields[2])).Data;
 
+var partition = new List<(Vector image, int expected)>();
+var counter = 0;
 for (int i = 0; i < rowGroup.RowCount; i++)
 {        
     var item = bytes.GetValue(i) as byte[];
@@ -34,19 +36,14 @@ for (int i = 0; i < rowGroup.RowCount; i++)
             list.Add(pixel / 255f);
         }
     }
-    var input = new Vector([.. list]);
 
-    var expected = new float[10];
-    expected[label] = 1f;
-    Console.WriteLine($"Loaded image {i}");
-
-    var cost = network.BackPropagate(input, new Vector(expected));
-    foreach (var layer in cost)
+    partition.Add((new Vector(list.ToArray()), label));
+    if (partition.Count == 10)
     {
-        Console.WriteLine($"Errors in layer: {string.Join(" ", layer)}");
+        Console.WriteLine($"Sending partition {++counter}...");
+        network.BackPropagate(partition);
+        partition.Clear();
     }
-
-    break;
 }
 
 

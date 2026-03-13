@@ -1,7 +1,8 @@
 class NeuralNetwork
 {    
+    public const float LearningRate = 0.15f;
     public static NeuralNetwork CreateRandom(int[] layerSizes)
-    {        
+    {
         var weights = new List<Matrix>(capacity: layerSizes.Length - 1);
         var biases = new List<Vector>(capacity: layerSizes.Length - 1);
         int sizeInput = layerSizes[0];
@@ -27,17 +28,22 @@ class NeuralNetwork
     public void BackPropagate(ICollection<(Vector input, int expected)> inputs)
     {
         var errors = new List<(List<Matrix>, List<Vector>)>();
-        foreach (var pair in inputs)
+        foreach (var (input, expected) in inputs)
         {
             var desired = new Vector(new float[10]);
-            desired.Values[pair.expected] = 1;
+            desired.Values[expected] = 1;
 
-            errors.Add(BackPropagate(pair.input, desired));
+            errors.Add(BackPropagate(input, desired));
         }
 
-        // Calculate average error
+        for (int layer = 0; layer < NumberOfLayers; layer++)
+        {
+            var weightAdjust = Matrix.Average(errors.Select(e => e.Item1[layer])) * -LearningRate;
+            var biasAdjust = Vector.Average(errors.Select(e => e.Item2[layer])) * -LearningRate;
 
-        // APply adjustments to weights
+            _weights[layer] = _weights[layer] + weightAdjust;
+            _biases[layer] = _biases[layer] + biasAdjust;
+        }
     }
 
     private (List<Matrix>, List<Vector>) BackPropagate(Vector input, Vector desired)
@@ -57,6 +63,7 @@ class NeuralNetwork
         }
 
         var cost = activation.Zip(desired, (x, y) => (x - y) * (x - y)).Sum() / 2;
+        Console.WriteLine($"Cost: {cost}");
 
         // And now........back
         var weightErrors = new List<Matrix>();
