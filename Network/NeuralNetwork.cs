@@ -53,6 +53,16 @@ class NeuralNetwork
         return costs.Average();
     }
 
+    public List<(Matrix, Vector)> Export()
+    {
+        var list = new List<(Matrix, Vector)>();
+        for (int i = 0; i < NumberOfLayers; i++)
+        {
+            list.Add((_weights[i], _biases[i]));
+        }
+        return list;
+    }
+
     private (List<Matrix> weights, List<Vector> bias, float cost) BackPropagate(Vector input, Vector desired)
     {
         // Save Z values for each layer
