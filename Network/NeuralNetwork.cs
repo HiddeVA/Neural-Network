@@ -25,28 +25,35 @@ class NeuralNetwork
         _biases = biases;
     }
 
-    public void BackPropagate(ICollection<(Vector input, int expected)> inputs)
+    public float BackPropagate(ICollection<(Vector input, int expected)> inputs)
     {
-        var errors = new List<(List<Matrix>, List<Vector>)>();
+        var costs = new List<float>();
+        var weightErrors = new List<List<Matrix>>();
+        var biasErrors = new List<List<Vector>>();
         foreach (var (input, expected) in inputs)
         {
             var desired = new Vector(new float[10]);
             desired.Values[expected] = 1;
 
-            errors.Add(BackPropagate(input, desired));
+            var (weights, bias, cost) = BackPropagate(input, desired);
+            weightErrors.Add(weights);
+            biasErrors.Add(bias);
+            costs.Add(cost);
         }
 
         for (int layer = 0; layer < NumberOfLayers; layer++)
         {
-            var weightAdjust = Matrix.Average(errors.Select(e => e.Item1[layer])) * -LearningRate;
-            var biasAdjust = Vector.Average(errors.Select(e => e.Item2[layer])) * -LearningRate;
+            var weightAdjust = Matrix.Average(weightErrors.Select(e => e[layer])) * -LearningRate;
+            var biasAdjust = Vector.Average(biasErrors.Select(e => e[layer])) * -LearningRate;
 
             _weights[layer] = _weights[layer] + weightAdjust;
             _biases[layer] = _biases[layer] + biasAdjust;
         }
+
+        return costs.Average();
     }
 
-    private (List<Matrix>, List<Vector>) BackPropagate(Vector input, Vector desired)
+    private (List<Matrix> weights, List<Vector> bias, float cost) BackPropagate(Vector input, Vector desired)
     {
         // Save Z values for each layer
         var zValues = new List<Vector>();
@@ -63,7 +70,6 @@ class NeuralNetwork
         }
 
         var cost = activation.Zip(desired, (x, y) => (x - y) * (x - y)).Sum() / 2;
-        Console.WriteLine($"Cost: {cost}");
 
         // And now........back
         var weightErrors = new List<Matrix>();
@@ -88,7 +94,7 @@ class NeuralNetwork
         biasErrors.Reverse();
         weightErrors.Reverse();
 
-        return (weightErrors, biasErrors);
+        return (weightErrors, biasErrors, cost);
     }
 
     private static Vector Sigmoid(Vector input) => new([..input.Select(Sigmoid)]);

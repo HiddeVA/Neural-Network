@@ -14,35 +14,40 @@ var dataRoot = "/home/hidde-van-abbema/git/knowledge night/data";
 using var stream = File.OpenRead($"{dataRoot}/train-00000-of-00001.parquet");
 using var reader = await ParquetReader.CreateAsync(stream);
 
-var schema = reader.Schema;
-var rowGroup = reader.RowGroups[0];
-var bytes = (await rowGroup.ReadColumnAsync(schema.DataFields[0])).Data;
-var labels = (await rowGroup.ReadColumnAsync(schema.DataFields[2])).Data;
-
-var partition = new List<(Vector image, int expected)>();
 var counter = 0;
-for (int i = 0; i < rowGroup.RowCount; i++)
-{        
-    var item = bytes.GetValue(i) as byte[];
-    var label = (int)(long)labels.GetValue(i)!;
+for (int group = 0; group < reader.RowGroupCount; group++)
+{
+    var groupReader = reader.OpenRowGroupReader(group);
+    var schema = reader.Schema;
+    var rowGroup = groupReader.RowGroup;
+    var bytes = (await groupReader.ReadColumnAsync(schema.DataFields[0])).Data;
+    var labels = (await groupReader.ReadColumnAsync(schema.DataFields[2])).Data;
 
-    var image = Image.Load<L8>(item.AsSpan());
-    var list = new List<float>();
-    for (int row = 0; row < image.Height; row++)
-    {
-        for (int col = 0; col < image.Width; col++)
+    var partition = new List<(Vector image, int expected)>();
+    for (int i = 0; i < groupReader.RowCount; i++)
+    {        
+        var item = bytes.GetValue(i) as byte[];
+        var label = (int)(long)labels.GetValue(i)!;
+
+        var image = Image.Load<L8>(item.AsSpan());
+        var list = new List<float>();
+        for (int row = 0; row < image.Height; row++)
         {
-            var pixel = image[col, row].PackedValue;
-            list.Add(pixel / 255f);
+            for (int col = 0; col < image.Width; col++)
+            {
+                var pixel = image[col, row].PackedValue;
+                list.Add(pixel / 255f);
+            }
         }
-    }
 
-    partition.Add((new Vector(list.ToArray()), label));
-    if (partition.Count == 10)
-    {
-        Console.WriteLine($"Sending partition {++counter}...");
-        network.BackPropagate(partition);
-        partition.Clear();
+        partition.Add((new Vector([.. list]), label));
+        if (partition.Count == 10)
+        {
+            Console.WriteLine($"Sending partition {++counter}...");
+            var costAvg = network.BackPropagate(partition);
+            Console.WriteLine($"Average cost: {costAvg}");
+            partition.Clear();
+        }
     }
 }
 
