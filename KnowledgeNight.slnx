@@ -1,0 +1,5 @@
+<Solution>
+  <Project Path="NeuralNetwork/NeuralNetwork.csproj" />
+  <Project Path="NumberRecognition.Cli/NumberRecognition.Cli.csproj" />
+  <Project Path="NumberRecognition.Drawing/NumberRecognition.Drawing.csproj" />
+</Solution>

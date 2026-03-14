@@ -1,3 +1,7 @@
+using KnowledgeNight.NeuralNetwork.Math;
+
+namespace KnowledgeNight.NeuralNetwork;
+
 class NeuralNetwork
 {    
     public const float LearningRate = 0.15f;

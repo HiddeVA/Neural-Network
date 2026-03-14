@@ -1,5 +1,7 @@
 using System.Collections;
 
+namespace KnowledgeNight.NeuralNetwork.Math;
+
 record Vector(float[] Values) : IEnumerable<float>
 {
     private static readonly Random random = new((int)DateTimeOffset.Now.ToUnixTimeSeconds());
