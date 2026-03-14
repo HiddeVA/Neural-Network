@@ -52,6 +52,23 @@ cleatCanvas.addEventListener("click", () => {
 })
 
 saveImage.addEventListener("click", () => {
+    canvas.toBlob(blob => {
+
+        const formData = new FormData();
+        formData.append("image", blob);
+
+        fetch("/", {
+            body: formData,
+            headers: {
+                "Content-Type": "multipart/form-data"
+            },
+            method: 'post'
+        }).then(res => console.log(res));
+
+        var xhr = new XMLHttpRequest;
+        xhr.open( "POST", "abc.php" );
+        xhr.send(formData);
+    },"image/png");
     // TODO: Send to backend and run through Neural network
 })
 

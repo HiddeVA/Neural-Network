@@ -29,6 +29,19 @@ public class NeuralNetwork
         _biases = biases;
     }
 
+    public Vector FeedForward(Vector input)
+    {        
+        var activation = input;
+        for (int layer = 0; layer < NumberOfLayers; layer++)
+        {
+            var weights = _weights[layer];
+            var biases = _biases[layer];
+            var weighted = weights * activation + biases;
+            activation = Sigmoid(weighted);
+        }
+        return activation;
+    }
+
     public float BackPropagate(ICollection<(Vector input, int expected)> inputs)
     {
         var costs = new List<float>();
