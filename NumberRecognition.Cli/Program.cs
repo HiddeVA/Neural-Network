@@ -56,11 +56,11 @@ for (int group = 0; group < reader.RowGroupCount; group++)
 
 Console.WriteLine("Exporting values...");
 var values = network.Export();
-var json = values.Select(v => new
+var json = new
 {
-    Weights = v.Item1.Values,
-    Biases = v.Item2.Values
-});
+    Weights = values.weights.Select(m => m.Values),
+    Biases = values.biases.Select(v => v.Values),
+};
 
 var filePath = $"{projectRoot}/values.json";
 var settings = new JsonSerializerOptions { WriteIndented = true };

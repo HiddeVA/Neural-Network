@@ -1,6 +1,6 @@
 namespace KnowledgeNight.NeuralNetwork.Math;
 
-record Matrix(float[][] Values)
+public record Matrix(float[][] Values)
 {
     public Matrix Transpose()
     {

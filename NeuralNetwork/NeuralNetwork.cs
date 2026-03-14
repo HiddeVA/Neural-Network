@@ -2,7 +2,7 @@ using KnowledgeNight.NeuralNetwork.Math;
 
 namespace KnowledgeNight.NeuralNetwork;
 
-class NeuralNetwork
+public class NeuralNetwork
 {    
     public const float LearningRate = 0.15f;
     public static NeuralNetwork CreateRandom(int[] layerSizes)
@@ -57,14 +57,9 @@ class NeuralNetwork
         return costs.Average();
     }
 
-    public List<(Matrix, Vector)> Export()
+    public (List<Matrix> weights, List<Vector> biases) Export()
     {
-        var list = new List<(Matrix, Vector)>();
-        for (int i = 0; i < NumberOfLayers; i++)
-        {
-            list.Add((_weights[i], _biases[i]));
-        }
-        return list;
+        return (_weights, _biases);
     }
 
     private (List<Matrix> weights, List<Vector> bias, float cost) BackPropagate(Vector input, Vector desired)
