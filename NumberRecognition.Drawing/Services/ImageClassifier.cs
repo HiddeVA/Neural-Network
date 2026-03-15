@@ -1,4 +1,5 @@
 using System.Text.Json;
+using KnowledgeNight.NeuralNetwork;
 using KnowledgeNight.NeuralNetwork.Math;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
@@ -17,11 +18,11 @@ class ImageClassifier
         var parametersFile = "/home/hidde-van-abbema/git/knowledge-night/values.json";
         var parameters = JsonSerializer.Deserialize<NetworkParameters>(File.OpenRead(parametersFile))!;
         _network = new(
-            parameters.Weights.Select(w => new Matrix(w)).ToList(),
-            parameters.Biases.Select(b => new Vector(b)).ToList()
+            [.. parameters.Weights.Select(w => new Matrix(w))],
+            [.. parameters.Biases.Select(b => new Vector(b))]
         );
-
     }
+    
     public (int value, float confidence) Classify(IFormFile input)
     {
         var file = $"{samplesRoot}/{Guid.NewGuid()}";
@@ -53,10 +54,4 @@ class ImageClassifier
         }
         return new Vector(list.ToArray());
     }
-}
-
-public class NetworkParameters
-{
-    public required List<float[][]> Weights { get; set; } 
-    public required List<float[]> Biases {get; set;}
 }

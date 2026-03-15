@@ -10,9 +10,16 @@ Console.WriteLine("Starting...");
 
 Console.WriteLine("Creating network with 3 layers");
 
-var network = NeuralNetwork.CreateRandom([28 * 28, 16, 10]);
 
 const string projectRoot = "/home/hidde-van-abbema/git/knowledge-night";
+
+// var network = NeuralNetwork.CreateRandom([28 * 28, 16, 10]);
+var parametersFile = $"{projectRoot}/values.json";
+var parameters = JsonSerializer.Deserialize<NetworkParameters>(File.OpenRead(parametersFile))!;
+var network = new NeuralNetwork(
+    [.. parameters.Weights.Select(w => new Matrix(w))],
+    [.. parameters.Biases.Select(b => new Vector(b))]
+);
 
 using var stream = File.OpenRead($"{projectRoot}/data/train-00000-of-00001.parquet");
 using var reader = await ParquetReader.CreateAsync(stream);
@@ -44,22 +51,25 @@ for (int group = 0; group < reader.RowGroupCount; group++)
         }
 
         partition.Add((new Vector([.. list]), label));
-        if (partition.Count == 10)
-        {
-            Console.WriteLine($"Sending partition {++counter}...");
-            var costAvg = network.BackPropagate(partition);
-            Console.WriteLine($"Average cost: {costAvg}");
-            partition.Clear();
-        }
     }
+
+    var shuffled = partition.OrderBy(_ => Random.Shared.Next()).ToList();
+    var costs = new List<float>();
+    foreach (var sample in shuffled.Chunk(10))
+    {
+        costs.Add(network.BackPropagate(partition));
+    }
+
+    Console.WriteLine($"Iteration {counter++ * 10}. Average cost of last {rowGroup.NumRows} items: {costs.Average()}");
+    partition.Clear();
 }
 
 Console.WriteLine("Exporting values...");
-var values = network.Export();
-var json = new
+var (weights, biases) = network.Export();
+var json = new NetworkParameters
 {
-    Weights = values.weights.Select(m => m.Values),
-    Biases = values.biases.Select(v => v.Values),
+    Weights = [..weights.Select(m => m.Values)],
+    Biases = [..biases.Select(v => v.Values)],
 };
 
 var filePath = $"{projectRoot}/values.json";
