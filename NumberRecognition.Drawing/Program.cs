@@ -1,17 +1,21 @@
-using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
-using NumberRecognition.Drawing;
+using KnowledgeNight.NumberRecognition.Drawing;
 
 var builder = WebApplication.CreateBuilder(args);
 var app = builder.Build();
 
+app.MapStaticAssets();
+app.UseDefaultFiles();
+
 var imageClassifier = new ImageClassifier();
-app.UseStaticFiles();
-app.MapGet("/", () => "Hello World!");
 app.MapPost("/", ([FromForm(Name = "image")] IFormFile file) =>
 {
-    var result = imageClassifier.Classify(file);
-    return Results.Ok(result);
-});
+    var (value, confidence) = imageClassifier.Classify(file);
+    return Results.Ok(new
+    {
+        Confidence = confidence,
+        Value = value
+    });
+}).DisableAntiforgery();
 
 app.Run();

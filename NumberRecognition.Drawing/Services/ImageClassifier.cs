@@ -8,6 +8,7 @@ namespace KnowledgeNight.NumberRecognition.Drawing;
 
 class ImageClassifier
 {
+    private readonly string samplesRoot = "/home/hidde-van-abbema/git/knowledge-night/samples";
     private readonly NeuralNetwork.NeuralNetwork _network;
 
     public ImageClassifier()
@@ -21,17 +22,22 @@ class ImageClassifier
         );
 
     }
-    public int Classify(IFormFile input)
+    public (int value, float confidence) Classify(IFormFile input)
     {
-        var image = Image.Load(input.OpenReadStream()).CloneAs<L8>();
+        var file = $"{samplesRoot}/{Guid.NewGuid()}";
+        var imageBase = Image.Load(input.OpenReadStream());
+        var image = imageBase.CloneAs<L8>();
         image.Mutate(ctx =>
         {
             ctx.Resize(new Size(28, 28));
+            ctx.Invert();
         });
         var bytes = ToVector(image);
 
         var result = _network.FeedForward(bytes);
-        return 0;
+        var value = result.Index().MaxBy(p => p.Item);
+
+        return (value.Index, value.Item);
     }
 
     private static Vector ToVector(Image<L8> image)
